@@ -26,16 +26,16 @@ type client struct {
 // --------------------------- //
 // --------- METHODS --------- //
 // --------------------------- //
-func (c *client) Frontend(serverCount int) {
+func (c *client) Frontend(serverCount *int64) {
     if c.primary == nil {
         log.Println("Searching for new primary server...")
-        SearchId := serverCount-1
+        SearchId := int(*serverCount-1)
         
         for {
-            conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", SearchId+5000), grpc.WithTimeout(time.Second*2), grpc.WithBlock(), grpc.WithInsecure())
+            conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", SearchId+5000), grpc.WithTimeout(time.Second*5), grpc.WithBlock(), grpc.WithInsecure())
             if err != nil {
-                SearchId--
                 log.Printf("Failed to connect to %v: %v", SearchId, err)
+                SearchId--
                 continue
             }
             
@@ -46,6 +46,7 @@ func (c *client) Frontend(serverCount int) {
                 for {
                     if primary, _ := server.GetPrimary(context.Background(), &GoPrm.Empty{}); int(primary.Id) != -1 {
                         SearchId = int(primary.Id)
+                        conn.Close()
                         break
                     }
                     time.Sleep(time.Second*2)
@@ -73,10 +74,11 @@ func main() {
     }
     
     for {
-        c.Frontend(int(sc))
+        c.Frontend(&sc)
         time.Sleep(time.Second*5)
         number, err := c.primary.GetVal(context.Background(),&GoPrm.Empty{})
         if err != nil {
+            sc--
             log.Printf("Server connection error: %v", err)
             c.primary = nil
             continue

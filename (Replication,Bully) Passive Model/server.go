@@ -36,7 +36,7 @@ type server struct {
     coordID     int32
     coordAlive  bool
     number      int32
-    log         map[int]int32
+    log         map[int32]int32
     peers       map[int32]GoPrm.PrmClient
 }
 
@@ -44,12 +44,19 @@ type server struct {
 // ---------- METHODS --------- //
 // ---------------------------- //
 func (s *server) GetPrimary(context context.Context, _ *GoPrm.Empty) (*GoPrm.Primary, error) {
+    log.Println("Client Request: Returning currently known primary server")
     return &GoPrm.Primary{Id: s.coordID}, nil
 }
 
+func (s *server) CloneLog(context context.Context, logs *GoPrm.Log) (*GoPrm.Empty, error) {
+    log.Printf("Cloning log of coordinator; size %v:%v",len(logs.Log),len(s.log))
+    s.log = logs.Log
+    return &GoPrm.Empty{},nil
+}
+
 func (s *server) SetVal(context context.Context, task *GoPrm.Task) (*GoPrm.Empty, error) {
-    log.Printf("Set number to value %v", task.Query)
-    s.log[len(s.log)] = task.Query
+    log.Printf("Client Request: Set number to value %v", task.Query)
+    s.log[int32(len(s.log))] = task.Query
     s.number = task.Query
     if s.state == COORDINATOR {
         log.Println("Broadcasting value to backup servers...")
@@ -61,6 +68,7 @@ func (s *server) SetVal(context context.Context, task *GoPrm.Task) (*GoPrm.Empty
 }
 
 func (s *server) GetVal(context context.Context, _ *GoPrm.Empty) (*GoPrm.Value, error) {
+    log.Println("Client Request: Returning the value of number")
     return &GoPrm.Value{Query: s.number},nil
 }
 
@@ -101,6 +109,9 @@ func (s *server) Elect(context context.Context, ans *GoPrm.Task) (*GoPrm.Empty, 
             if s.state == CANDIDATE || s.state == COORDINATOR {
                 log.Printf("Status: follower")
             }
+            if s.coordID != ans.Id {
+                log.Printf("Follower of new coordinator %v",ans.Id)
+            }
             s.coordID = ans.Id
             s.state = FOLLOWER
             s.coordAlive = true
@@ -119,6 +130,7 @@ func (s *server) Bully() {
                     log.Printf("Status: coordinator")
                     s.Broadcast(COORDINATOR,false)
                     s.state = COORDINATOR
+                    s.CloneLog(context.Background(),&GoPrm.Log{Log: s.log})
                 } else if sendElection && s.votes > 0 {
                     time.Sleep(time.Second*2)
                     if s.state != FOLLOWER {
@@ -163,7 +175,7 @@ func main() {
         coordID: -1,
         coordAlive: false,
         number: 0,
-        log: make(map[int]int32),
+        log: make(map[int32]int32),
         peers: make(map[int32]GoPrm.PrmClient),
     }
     
