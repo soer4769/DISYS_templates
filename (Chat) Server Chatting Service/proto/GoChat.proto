@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package = "github.com/GoChat/proto/GoChat;GoChat";
+
+package GoChat;
+
+service Chat {
+  rpc Connect(Post) returns (stream Post) {}
+  rpc Disconnect(Post) returns (Empty) {}
+  rpc Messages(stream Post) returns (Post) {}
+}
+
+message Post {
+  int32 id = 1;
+  string message = 2;
+  int64 lamport = 3;
+}
+
+message Empty {}
