@@ -24,8 +24,9 @@ const _ = grpc.SupportPackageIsVersion7
 type PrmClient interface {
 	Elect(ctx context.Context, in *Task, opts ...grpc.CallOption) (*Empty, error)
 	GetPrimary(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Primary, error)
-	AddToLog(ctx context.Context, in *Task, opts ...grpc.CallOption) (*Empty, error)
-	AddVal(ctx context.Context, in *Task, opts ...grpc.CallOption) (*Empty, error)
+	CloneLog(ctx context.Context, in *Log, opts ...grpc.CallOption) (*Empty, error)
+	SetVal(ctx context.Context, in *Task, opts ...grpc.CallOption) (*Empty, error)
+	GetVal(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Value, error)
 }
 
 type prmClient struct {
@@ -54,18 +55,27 @@ func (c *prmClient) GetPrimary(ctx context.Context, in *Empty, opts ...grpc.Call
 	return out, nil
 }
 
-func (c *prmClient) AddToLog(ctx context.Context, in *Task, opts ...grpc.CallOption) (*Empty, error) {
+func (c *prmClient) CloneLog(ctx context.Context, in *Log, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/GoPrm.Prm/AddToLog", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/GoPrm.Prm/CloneLog", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *prmClient) AddVal(ctx context.Context, in *Task, opts ...grpc.CallOption) (*Empty, error) {
+func (c *prmClient) SetVal(ctx context.Context, in *Task, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/GoPrm.Prm/AddVal", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/GoPrm.Prm/SetVal", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *prmClient) GetVal(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Value, error) {
+	out := new(Value)
+	err := c.cc.Invoke(ctx, "/GoPrm.Prm/GetVal", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -78,8 +88,9 @@ func (c *prmClient) AddVal(ctx context.Context, in *Task, opts ...grpc.CallOptio
 type PrmServer interface {
 	Elect(context.Context, *Task) (*Empty, error)
 	GetPrimary(context.Context, *Empty) (*Primary, error)
-	AddToLog(context.Context, *Task) (*Empty, error)
-	AddVal(context.Context, *Task) (*Empty, error)
+	CloneLog(context.Context, *Log) (*Empty, error)
+	SetVal(context.Context, *Task) (*Empty, error)
+	GetVal(context.Context, *Empty) (*Value, error)
 	mustEmbedUnimplementedPrmServer()
 }
 
@@ -93,11 +104,14 @@ func (UnimplementedPrmServer) Elect(context.Context, *Task) (*Empty, error) {
 func (UnimplementedPrmServer) GetPrimary(context.Context, *Empty) (*Primary, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPrimary not implemented")
 }
-func (UnimplementedPrmServer) AddToLog(context.Context, *Task) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddToLog not implemented")
+func (UnimplementedPrmServer) CloneLog(context.Context, *Log) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CloneLog not implemented")
 }
-func (UnimplementedPrmServer) AddVal(context.Context, *Task) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddVal not implemented")
+func (UnimplementedPrmServer) SetVal(context.Context, *Task) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetVal not implemented")
+}
+func (UnimplementedPrmServer) GetVal(context.Context, *Empty) (*Value, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetVal not implemented")
 }
 func (UnimplementedPrmServer) mustEmbedUnimplementedPrmServer() {}
 
@@ -148,38 +162,56 @@ func _Prm_GetPrimary_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Prm_AddToLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Task)
+func _Prm_CloneLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Log)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PrmServer).AddToLog(ctx, in)
+		return srv.(PrmServer).CloneLog(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/GoPrm.Prm/AddToLog",
+		FullMethod: "/GoPrm.Prm/CloneLog",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PrmServer).AddToLog(ctx, req.(*Task))
+		return srv.(PrmServer).CloneLog(ctx, req.(*Log))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Prm_AddVal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Prm_SetVal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Task)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PrmServer).AddVal(ctx, in)
+		return srv.(PrmServer).SetVal(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/GoPrm.Prm/AddVal",
+		FullMethod: "/GoPrm.Prm/SetVal",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PrmServer).AddVal(ctx, req.(*Task))
+		return srv.(PrmServer).SetVal(ctx, req.(*Task))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Prm_GetVal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PrmServer).GetVal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/GoPrm.Prm/GetVal",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PrmServer).GetVal(ctx, req.(*Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -200,12 +232,16 @@ var Prm_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Prm_GetPrimary_Handler,
 		},
 		{
-			MethodName: "AddToLog",
-			Handler:    _Prm_AddToLog_Handler,
+			MethodName: "CloneLog",
+			Handler:    _Prm_CloneLog_Handler,
 		},
 		{
-			MethodName: "AddVal",
-			Handler:    _Prm_AddVal_Handler,
+			MethodName: "SetVal",
+			Handler:    _Prm_SetVal_Handler,
+		},
+		{
+			MethodName: "GetVal",
+			Handler:    _Prm_GetVal_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

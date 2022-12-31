@@ -28,7 +28,7 @@ type client struct {
 // --------------------------- //
 func (c *client) Frontend(serverCount int) {
     if c.primary == nil {
-        log.Println("Searching for primary server...")
+        log.Println("Searching for new primary server...")
         SearchId := serverCount-1
         
         for {
@@ -75,11 +75,13 @@ func main() {
     for {
         c.Frontend(int(sc))
         time.Sleep(time.Second*5)
-        if _, err := c.primary.AddVal(context.Background(),&GoPrm.Task{Id: c.id, Query: 1, Lamport: -1}); err == nil {
-            log.Printf("Failed to connect to server %v, finding new primary server...", c.primary)
+        number, err := c.primary.GetVal(context.Background(),&GoPrm.Empty{})
+        if err != nil {
+            log.Printf("Server connection error: %v", err)
             c.primary = nil
             continue
         }
-        log.Printf("Increasing number by %v", 1)
+        c.primary.SetVal(context.Background(),&GoPrm.Task{Id: c.id, Query: number.Query+1, Lamport: -1})
+        log.Printf("Increasing number by %v to %v", 1, number.Query)
     }
 }

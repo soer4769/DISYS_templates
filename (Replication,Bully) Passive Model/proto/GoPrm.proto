@@ -7,8 +7,9 @@ package GoPrm;
 service Prm {
     rpc Elect(Task) returns (Empty) {}
     rpc GetPrimary(Empty) returns (Primary) {}
-    rpc AddToLog(Task) returns (Empty) {}
-    rpc AddVal(Task) returns (Empty) {}
+    rpc CloneLog(Log) returns (Empty) {}
+    rpc SetVal(Task) returns (Empty) {}
+    rpc GetVal(Empty) returns (Value) {}
 }
 
 message Primary {
@@ -19,6 +20,14 @@ message Task {
     int32 id = 1;
     int32 query = 2;
     int64 lamport = 3;
+}
+
+message Value {
+    int32 query = 1;
+}
+
+message Log {
+    map<int32,int32> log = 1;
 }
 
 message Empty {}

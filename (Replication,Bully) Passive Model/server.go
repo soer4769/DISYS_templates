@@ -36,7 +36,7 @@ type server struct {
     coordID     int32
     coordAlive  bool
     number      int32
-    log         [][]int32
+    log         map[int]int32
     peers       map[int32]GoPrm.PrmClient
 }
 
@@ -47,17 +47,21 @@ func (s *server) GetPrimary(context context.Context, _ *GoPrm.Empty) (*GoPrm.Pri
     return &GoPrm.Primary{Id: s.coordID}, nil
 }
 
-func (s *server) AddVal(context context.Context, task *GoPrm.Task) (*GoPrm.Empty, error) {
-    log.Printf("Add value %v", task.Query)
-    s.log = append(s.log,[]int32{1,task.Query})
-    s.number += task.Query
+func (s *server) SetVal(context context.Context, task *GoPrm.Task) (*GoPrm.Empty, error) {
+    log.Printf("Set number to value %v", task.Query)
+    s.log[len(s.log)] = task.Query
+    s.number = task.Query
     if s.state == COORDINATOR {
-        log.Println("Broadcasting 'add value' to backup servers...")
+        log.Println("Broadcasting value to backup servers...")
         for _, p := range s.peers {
-            p.AddVal(context, task)
+            p.SetVal(context, task)
         }
     }
     return &GoPrm.Empty{},nil
+}
+
+func (s *server) GetVal(context context.Context, _ *GoPrm.Empty) (*GoPrm.Value, error) {
+    return &GoPrm.Value{Query: s.number},nil
 }
 
 // ---------------------------- //
@@ -159,6 +163,7 @@ func main() {
         coordID: -1,
         coordAlive: false,
         number: 0,
+        log: make(map[int]int32),
         peers: make(map[int32]GoPrm.PrmClient),
     }
     
