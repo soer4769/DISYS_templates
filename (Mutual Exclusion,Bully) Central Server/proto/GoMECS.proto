@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option go_package = "github.com/GoMERA/proto/GoMECS;GoMECS";
+
+package GoMECS;
+
+service MECS {
+    rpc Request(Query) returns (Empty) {}
+    rpc Release(Query) returns (Empty) {}
+    rpc Elect(Task) returns (Empty) {}
+}
+
+message Query {
+    int32 id = 1;
+}
+
+message Task {
+    int32 id = 1;
+    int32 query = 2;
+    int64 lamport = 3;
+}
+
+message Empty {}
