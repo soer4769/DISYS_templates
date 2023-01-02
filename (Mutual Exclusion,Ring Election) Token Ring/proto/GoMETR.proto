@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package = "github.com/GoMETR/proto/GoMETR;GoMETR";
+
+package GoMETR;
+
+service METR {
+    rpc PassToken(Token) returns (Empty){}
+}
+
+message Token {
+    int32 id = 1;
+    int32 electstat = 2;
+    int64 lamport = 3;
+}
+
+message Empty {}
