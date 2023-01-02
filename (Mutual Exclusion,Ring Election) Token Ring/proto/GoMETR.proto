@@ -12,6 +12,7 @@ message Token {
     int32 id = 1;
     int32 electstat = 2;
     int64 lamport = 3;
+    bool critical = 4;
 }
 
 message Empty {}
